@@ -1,86 +1,90 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.AI;
 
-public class EnemyPatrol : MonoBehaviour
+public class EnemyAI : MonoBehaviour
 {
-    public Transform[] patrolPoints;
+    [Header("Solo para enemigos colocados en la escena")]
+    [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] public Transform player;  // <-- jugador asignado explÃ­citamente
+
+    private int currentPointIndex = 0;
     private NavMeshAgent agent;
-    private int currentPoint = 0;
+    private Attack attackComponent;
 
-    public Transform jugador;
+    public float detectionRange = 20f;
+    private bool isInitialized = false;
 
-    public float distanciaDeteccion = 10f;
-    public float distanciaAtaque = 2f;
+    void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        attackComponent = GetComponent<Attack>();
 
-    public float tiempoEntreAtaques = 1.5f;
-    private float timerAtaque = 0f;
-
-    private EnemyHealth enemyHealth;
+        if (attackComponent == null)
+            Debug.LogError("EnemyAI no tiene componente Attack.");
+    }
 
     void Start()
     {
-        agent = GetComponent<NavMeshAgent>();
-        enemyHealth = GetComponent<EnemyHealth>();
+        // Solo buscamos jugador si no estÃ¡ asignado desde el inspector o spawner
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        }
 
-        if (patrolPoints.Length > 0)
-            agent.destination = patrolPoints[0].position;
-
-        if (jugador == null)
-            jugador = GameObject.FindGameObjectWithTag("Player").transform;
+        if (!isInitialized && patrolPoints != null && patrolPoints.Length > 0 && player != null)
+        {
+            currentPointIndex = Random.Range(0, patrolPoints.Length);
+            agent.SetDestination(patrolPoints[currentPointIndex].position);
+            isInitialized = true;
+            Debug.Log($"[EnemyAI] Inicializado en Start() con {patrolPoints.Length} puntos.");
+        }
+        else if (!isInitialized)
+        {
+            Debug.LogWarning("[EnemyAI] No inicializado. Falta jugador o puntos.");
+        }
     }
 
     void Update()
     {
-        if (enemyHealth.currentHealth <= 0) return; // No hacer nada si está muerto
+        if (!isInitialized || player == null || attackComponent == null) return;
 
-        timerAtaque += Time.deltaTime;
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-        if (jugador == null)
-            return;
-
-        float distanciaAlJugador = Vector3.Distance(transform.position, jugador.position);
-
-        if (distanciaAlJugador <= distanciaDeteccion)
+        if (distanceToPlayer <= detectionRange)
         {
-            agent.SetDestination(jugador.position);
+            agent.SetDestination(player.position);
 
-            if (distanciaAlJugador <= distanciaAtaque)
+            if (distanceToPlayer <= attackComponent.attackRange)
             {
-                if (timerAtaque >= tiempoEntreAtaques)
-                {
-                    AtacarJugador();
-                    timerAtaque = 0f;
-                }
-                agent.isStopped = true;
-            }
-            else
-            {
-                agent.isStopped = false;
+                attackComponent.Atacar();
             }
         }
         else
         {
-            agent.isStopped = false;
-
-            if (patrolPoints.Length == 0 || agent.pathPending)
-                return;
-
-            if (agent.remainingDistance < 0.5f)
+            // Patrullaje
+            if (!agent.pathPending && agent.remainingDistance < 0.5f)
             {
-                currentPoint = (currentPoint + 1) % patrolPoints.Length;
-                agent.destination = patrolPoints[currentPoint].position;
+                currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
+                agent.SetDestination(patrolPoints[currentPointIndex].position);
             }
         }
     }
 
-    void AtacarJugador()
+    public void Initialize(Transform[] points, Transform playerTransform)
     {
-        IDamageable damageableJugador = jugador.GetComponent<IDamageable>();
-        if (damageableJugador != null)
+        patrolPoints = points;
+        player = playerTransform;
+
+        if (patrolPoints != null && patrolPoints.Length > 0)
         {
-            int daño = 10;
-            damageableJugador.RecibirDaño(daño);
-            Debug.Log($"{gameObject.name} atacó al jugador causando {daño} de daño.");
+            currentPointIndex = Random.Range(0, patrolPoints.Length);
+            agent.SetDestination(patrolPoints[currentPointIndex].position);
+            isInitialized = true;
+            Debug.Log("[EnemyAI] Inicializado desde Spawner.");
+        }
+        else
+        {
+            Debug.LogWarning("[EnemyAI] InicializaciÃ³n fallida: no hay puntos de patrulla.");
         }
     }
 }

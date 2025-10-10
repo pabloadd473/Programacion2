@@ -12,29 +12,32 @@ public class Attack : MonoBehaviour
 
     void Update()
     {
-        if (Time.time >= lastAttackTime + attackCooldown)
+        if (!UIManager.Win)
         {
-            // Para jugador: detectar input de ataque (clic izquierdo)
-            if (gameObject.CompareTag("Player") && Input.GetButtonDown("Fire1"))
+            if (Time.time >= lastAttackTime + attackCooldown)
             {
-                Atacar();
-            }
-            if (!gameObject.CompareTag("Player"))
-            {
-                Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, targetLayer);
-                if (hits.Length > 0)
+                // Para jugador: detectar input de ataque (clic izquierdo)
+                if (gameObject.CompareTag("Player") && Input.GetMouseButtonDown(0))
                 {
                     Atacar();
                 }
+                if (!gameObject.CompareTag("Player"))
+                {
+                    Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, targetLayer);
+                    if (hits.Length > 0)
+                    {
+                        Atacar();
+                    }
+                }
+                // Para enemigo: atacar automáticamente si jugador está en rango
+
             }
-            // Para enemigo: atacar automáticamente si jugador está en rango
-           
-        }        
+        }
     }
   
 
 
-    void Atacar()
+   public  void Atacar()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, attackRange, targetLayer);
 

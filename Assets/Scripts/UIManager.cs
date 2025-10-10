@@ -20,14 +20,16 @@ public class UIManager : MonoBehaviour
     public Button MainMenuButton;
     public Button MainMenuButtonPause;
     public Button MainMenuButtonDerrota;
+    public Button NextSceneButton;
 
-    private bool Win, PantallaGanar = false;
+    private bool PantallaGanar = false;
     public bool Pause;
 
     public GameObject WinScreen;
     public GameObject PauseScreen;
     public GameObject ExitScreen;
 
+    public static bool Win;
     public int vida = 1;
 
     private void Awake()
@@ -39,6 +41,7 @@ public class UIManager : MonoBehaviour
         MainMenuButton.onClick.AddListener(OnMainMenuButton);
         MainMenuButtonPause.onClick.AddListener(OnMainMenuButton);
         MainMenuButtonDerrota.onClick.AddListener(OnMainMenuButton);
+        NextSceneButton.onClick.AddListener(OnNextSceneButton);
         ResumeGame();
     }
 
@@ -63,21 +66,28 @@ public class UIManager : MonoBehaviour
             if ((TimeMinutes < 10) && (TimesSeconds < 9))
             {
                 TimeCounterGamePlay.text = "Tiempo: 0" + TimeMinutes + ":0" + Mathf.Ceil(TimesSeconds);
+                TimeCounterWin.text = "Tiempo: 0" + TimeMinutes + ":0" + Mathf.Ceil(TimesSeconds);
             }
             else
             {
                 if (TimeMinutes < 10)
                 {
                     TimeCounterGamePlay.text = "Tiempo: 0" + TimeMinutes + ":" + Mathf.Ceil(TimesSeconds);
+                    TimeCounterWin.text = "Tiempo: 0" + TimeMinutes + ":" + Mathf.Ceil(TimesSeconds);
                 }
                 else
                 {
                     if (TimesSeconds < 9)
                     {
                         TimeCounterGamePlay.text = "Tiempo: " + TimeMinutes + ":0" + Mathf.Ceil(TimesSeconds);
+                        TimeCounterWin.text = "Tiempo: " + TimeMinutes + ":0" + Mathf.Ceil(TimesSeconds);
                     }
-                    else TimeCounterGamePlay.text = "Tiempo: " + TimeMinutes + ":" + Mathf.Ceil(TimesSeconds);
-                }
+                    else
+                    {
+                        TimeCounterGamePlay.text = "Tiempo: " + TimeMinutes + ":" + Mathf.Ceil(TimesSeconds);
+                        TimeCounterWin.text = "Tiempo: " + TimeMinutes + ":" + Mathf.Ceil(TimesSeconds);
+                    }
+                    }
             }
             }
     }
@@ -169,6 +179,7 @@ public class UIManager : MonoBehaviour
     private void ResumeGame()
     {
         Pause = false;
+        Win = false;    
         Time.timeScale = 1f;
         PauseScreen.SetActive(false);
         TimeCounterGamePlay.gameObject.SetActive(true);
@@ -225,5 +236,14 @@ public class UIManager : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(0);
         Pause = false;
+        Win = false;
+    }
+    public void OnNextSceneButton()
+    {
+    Time.timeScale = 1f;
+        Debug.Log("Next Level");
+    SceneManager.LoadScene(2);
+    Pause = false;
+    Win = false;
     }
 }
